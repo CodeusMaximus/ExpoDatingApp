@@ -1,0 +1,3 @@
+ MONGO_URI=mongodb+srv://dfsturge:Admin@cluster0.uihszq3.mongodb.net/ExpoDatingApp?retryWrites=true&w=majority
+ 
+PORT=3000
