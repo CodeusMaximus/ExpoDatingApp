@@ -14,7 +14,7 @@ const Question7Screen = ({ navigation, route }) => {
     if (updatedAnswers.length < 15) {
       navigation.navigate('Question8', { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers: updatedAnswers });
     } else {
-      navigation.navigate('SignUpPhoneVerification', { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers: updatedAnswers });
+      navigation.navigate('UserName', { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers: updatedAnswers });
     }
   };
 
@@ -23,7 +23,7 @@ const Question7Screen = ({ navigation, route }) => {
   return (
     <View style={styles.container}>
           <ProgressBar progress={progress} />
-      <Text style={styles.title}>Are you employed full-time, part-time, or not employed?</Text>
+      <Text style={styles.title}>Are you employed full time parttime or not at all?</Text>
       <TextInput
         style={styles.input}
         placeholder="Your answer"

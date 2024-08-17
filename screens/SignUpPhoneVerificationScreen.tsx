@@ -17,13 +17,22 @@ const SignUpPhoneVerificationScreen = ({ navigation, route }) => {
     about,
     answers
   } = route.params;
+
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [isCodeSent, setIsCodeSent] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSendCode = async () => {
+    if (!phone) {
+      Alert.alert('Please enter a phone number');
+      return;
+    }
+
     try {
+      setIsLoading(true);
       const response = await axios.post('http://192.168.1.248:3000/send-code', { phone });
+      setIsLoading(false);
       if (response.data.success) {
         setIsCodeSent(true);
         Alert.alert('Verification code sent');
@@ -31,13 +40,20 @@ const SignUpPhoneVerificationScreen = ({ navigation, route }) => {
         Alert.alert('Failed to send verification code');
       }
     } catch (error) {
+      setIsLoading(false);
       console.error('Error sending code:', error.message);
       Alert.alert('Error sending code', error.message);
     }
   };
 
   const handleVerifyCode = async () => {
+    if (!code) {
+      Alert.alert('Please enter the verification code');
+      return;
+    }
+
     try {
+      setIsLoading(true);
       const response = await axios.post('http://192.168.1.248:3000/verify-code', {
         phone,
         code,
@@ -52,6 +68,7 @@ const SignUpPhoneVerificationScreen = ({ navigation, route }) => {
         about,
         answers
       });
+      setIsLoading(false);
       if (response.data.token) {
         Alert.alert('Registration Successful');
         navigation.navigate('Login');
@@ -59,6 +76,7 @@ const SignUpPhoneVerificationScreen = ({ navigation, route }) => {
         Alert.alert('Invalid verification code');
       }
     } catch (error) {
+      setIsLoading(false);
       console.error('Error verifying code:', error.message);
       Alert.alert('Error verifying code', error.message);
     }
@@ -71,20 +89,25 @@ const SignUpPhoneVerificationScreen = ({ navigation, route }) => {
         style={styles.input}
         placeholder="Phone Number"
         value={phone}
+        keyboardType="phone-pad"
         onChangeText={setPhone}
+        editable={!isLoading}
       />
-      <Button title="Send Code" onPress={handleSendCode} />
+      <Button title="Send Code" onPress={handleSendCode} disabled={isLoading} />
       {isCodeSent && (
         <>
           <TextInput
             style={styles.input}
             placeholder="Verification Code"
             value={code}
+            keyboardType="number-pad"
             onChangeText={setCode}
+            editable={!isLoading}
           />
-          <Button title="Verify" onPress={handleVerifyCode} />
+          <Button title="Verify" onPress={handleVerifyCode} disabled={isLoading} />
         </>
       )}
+      {isLoading && <Text>Loading...</Text>}
     </View>
   );
 };

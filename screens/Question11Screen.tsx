@@ -15,7 +15,7 @@ const Question11Screen = ({ navigation, route }) => {
       if (updatedAnswers.length < 15) {
         navigation.navigate('Question12', { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers: updatedAnswers });
       } else {
-        navigation.navigate('SignUpPhoneVerification', { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers: updatedAnswers });
+        navigation.navigate('UserName', { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers: updatedAnswers });
       }
     };
   

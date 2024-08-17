@@ -1,10 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Button, Image, StyleSheet, Alert, ScrollView } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SignUpPhotosScreen = ({ navigation, route }) => {
   const { email, firstName, country, zipcode, gender, interests, password, relationshipTypes, bio } = route.params;
   const [photos, setPhotos] = useState<string[]>([]);
+
+  useEffect(() => {
+    const loadPhotos = async () => {
+      const savedPhotos = await AsyncStorage.getItem('photos');
+      if (savedPhotos) {
+        setPhotos(JSON.parse(savedPhotos));
+      }
+    };
+
+    loadPhotos();
+  }, []);
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -15,11 +27,13 @@ const SignUpPhotosScreen = ({ navigation, route }) => {
 
     if (!result.canceled) {
       const selectedImageUri = result.assets[0].uri;
-      setPhotos([...photos, selectedImageUri]);
+      const newPhotos = [...photos, selectedImageUri];
+      setPhotos(newPhotos);
+      await AsyncStorage.setItem('photos', JSON.stringify(newPhotos));
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (photos.length < 1) {
       Alert.alert('Please upload at least one photo.');
       return;
