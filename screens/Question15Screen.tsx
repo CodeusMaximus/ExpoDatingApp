@@ -3,30 +3,44 @@ import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 import { ProgressBar } from 'react-native-paper';
 
 const Question15Screen = ({ navigation, route }) => {
-    const { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers } = route.params;
+    const { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers, relationshipTypes } = route.params;
     const [answer, setAnswer] = useState('');
     const [progress, setProgress] = useState(answers.length / 15);
   
     const handleFinish = () => {
       const updatedAnswers = [...answers, answer];
+  
+      // Update progress bar (optional for the last question)
       setProgress(updatedAnswers.length / 15);
   
-      if (updatedAnswers.length === 15) {
-        navigation.navigate('UserName', { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers: updatedAnswers });
-      }
+      // Navigate to the next screen with all necessary parameters
+      navigation.navigate('UserName', {
+        email, 
+        firstName, 
+        location, 
+        country, 
+        zipcode, 
+        gender, 
+        relationshipTypes, 
+        interests, 
+        bio, 
+       images, 
+        password, 
+        answers: updatedAnswers 
+      });
     };
   
     return (
       <View style={styles.container}>
-             <ProgressBar progress={progress} />
-          <Text style={styles.title}>Describe your ideal date.</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Your answer"
-            value={answer}
-            onChangeText={setAnswer}
-          />
-          <Button title="Finish" onPress={handleFinish} />
+        <ProgressBar progress={progress} />
+        <Text style={styles.title}>Describe your ideal date.</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Your answer"
+          value={answer}
+          onChangeText={setAnswer}
+        />
+        <Button title="Finish" onPress={handleFinish} />
       </View>
     );
 };

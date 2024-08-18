@@ -29,7 +29,7 @@ import ChatScreen from './screens/ChatScreen';
 import TodaysPicksScreen from './screens/TodaysPickScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import ProfileScreen from './screens/ProfileScreen';
-import SignUpDesiredRelationshipTypeScreen from './screens/SignUpDesiredRelationshipTypeScreen';
+import SignUpDesiredRelationshipTypeScreen from './screens/SignUpDesiredRelationshipType';
 import SignUpPhotosScreen from './screens/SignUpPhotoScreen';
 import SignUpBioScreen from './screens/SignUpBioScreen';
 import SignUpQuestionScreen from './screens/SignUpMatchQuestionScreen';

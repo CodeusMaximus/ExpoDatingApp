@@ -12,7 +12,7 @@ const SignUpDesiredRelationshipTypeScreen = ({ navigation, route }) => {
   });
 
   const handleNext = () => {
-    navigation.navigate('SignUpPhoto', { 
+    navigation.navigate('SignUpPhotos', { 
       email, 
       firstName, 
       location, 

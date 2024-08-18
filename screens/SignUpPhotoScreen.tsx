@@ -1,75 +1,61 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Button, Image, StyleSheet, Alert, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Button, Image, StyleSheet, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SignUpPhotosScreen = ({ navigation, route }) => {
-  const { email, firstName, country, zipcode, gender, interests, password, relationshipTypes, bio } = route.params;
-  const [photos, setPhotos] = useState<string[]>([]);
-
-  useEffect(() => {
-    const loadPhotos = async () => {
-      const savedPhotos = await AsyncStorage.getItem('photos');
-      if (savedPhotos) {
-        setPhotos(JSON.parse(savedPhotos));
-      }
-    };
-
-    loadPhotos();
-  }, []);
+  const { email, firstName, location, country, zipcode, gender, interests, password, relationshipTypes } = route.params;
+  const [images, setImages] = useState([]);
 
   const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 1,
     });
 
-    if (!result.canceled) {
+    if (!result.canceled && result.assets?.length > 0) {
       const selectedImageUri = result.assets[0].uri;
-      const newPhotos = [...photos, selectedImageUri];
-      setPhotos(newPhotos);
-      await AsyncStorage.setItem('photos', JSON.stringify(newPhotos));
+      setImages([...images, selectedImageUri]); // Add the image to the array
     }
   };
 
-  const handleNext = async () => {
-    if (photos.length < 1) {
-      Alert.alert('Please upload at least one photo.');
+  const handleNext = () => {
+    if (images.length === 0) {
+      Alert.alert('Error', 'Please upload at least one image before proceeding.');
       return;
     }
 
     navigation.navigate('SignUpBio', {
       email,
       firstName,
+      location,
       country,
       zipcode,
       gender,
       interests,
       password,
       relationshipTypes,
-      photos,
-      bio,
+      images, // Pass the images array to the next screen
     });
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={styles.container}>
       <Text style={styles.title}>Upload Photos</Text>
-      <Button title="Pick Images from Gallery" onPress={pickImage} />
-      <View style={styles.imagesContainer}>
-        {photos.map((photo, index) => (
-          <Image key={index} source={{ uri: photo }} style={styles.image} />
-        ))}
+      <View style={styles.imageContainer}>
+        {images.length > 0 && (
+          <Image source={{ uri: images[0] }} style={styles.image} />
+        )}
       </View>
+      <Button title="Pick Images" onPress={pickImage} />
       <Button title="Next" onPress={handleNext} />
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -77,16 +63,19 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     marginBottom: 20,
+    textAlign: 'center',
   },
-  imagesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginVertical: 20,
+  imageContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    width: '100%',
+    height: 250,
   },
   image: {
-    width: 100,
-    height: 100,
-    margin: 5,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
   },
 });
 

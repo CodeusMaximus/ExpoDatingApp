@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 import { ProgressBar } from 'react-native-paper';
 
-const Question12Screen = ({ navigation, route }) => {
+const Question13Screen = ({ navigation, route }) => {
     const { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers } = route.params;
     const [answer, setAnswer] = useState('');
     const [progress, setProgress] = useState(answers.length / 15);
@@ -12,7 +12,7 @@ const Question12Screen = ({ navigation, route }) => {
       setProgress(updatedAnswers.length / 15);
   
       if (updatedAnswers.length < 15) {
-        navigation.navigate('Question13', { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers: updatedAnswers });
+        navigation.navigate('Question14', { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers: updatedAnswers });
       } else {
         navigation.navigate('UserName', { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers: updatedAnswers });
       }
@@ -23,7 +23,7 @@ const Question12Screen = ({ navigation, route }) => {
     return (
       <View style={styles.container}>
            <ProgressBar progress={progress} />
-      <Text style={styles.title}>How important is travel to you?</Text>
+      <Text style={styles.title}>What are your favorite hobbies?</Text>
       <TextInput
         style={styles.input}
         placeholder="Your answer"
@@ -55,4 +55,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Question12Screen;
+export default Question13Screen;

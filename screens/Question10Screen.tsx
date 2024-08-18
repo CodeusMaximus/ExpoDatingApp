@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 import { ProgressBar } from 'react-native-paper';
 
-const Question10Screen = ({ navigation, route }) => {
+
+const Question11Screen = ({ navigation, route }) => {
     const { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers } = route.params;
     const [answer, setAnswer] = useState('');
     const [progress, setProgress] = useState(answers.length / 15);
@@ -12,7 +13,7 @@ const Question10Screen = ({ navigation, route }) => {
       setProgress(updatedAnswers.length / 15);
   
       if (updatedAnswers.length < 15) {
-        navigation.navigate('Question11', { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers: updatedAnswers });
+        navigation.navigate('Question12', { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers: updatedAnswers });
       } else {
         navigation.navigate('UserName', { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers: updatedAnswers });
       }
@@ -22,8 +23,8 @@ const Question10Screen = ({ navigation, route }) => {
   
     return (
       <View style={styles.container}>
-            <ProgressBar progress={progress} />
-      <Text style={styles.title}>Choose four words to describe yourself.</Text>
+             <ProgressBar progress={progress} />
+      <Text style={styles.title}>How long would you like your relationship to last?</Text>
       <TextInput
         style={styles.input}
         placeholder="Your answer"
@@ -55,4 +56,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Question10Screen;
+export default Question11Screen;
