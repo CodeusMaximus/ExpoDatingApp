@@ -24,7 +24,7 @@ const Question15Screen = ({ navigation, route }) => {
         relationshipTypes, 
         interests, 
         bio, 
-       images, 
+        images, 
         password, 
         answers: updatedAnswers 
       });

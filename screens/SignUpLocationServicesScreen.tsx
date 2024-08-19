@@ -15,6 +15,7 @@ const SignUpLocationServicesScreen = ({ navigation, route }) => {
 
       let location = await Location.getCurrentPositionAsync({});
       if (location) {
+        console.log('Location fetched:', location); // Log location for debugging
         navigation.navigate('SignUpLocation', { email, firstName, location });
       } else {
         Alert.alert('Location Error', 'Unable to retrieve location.');

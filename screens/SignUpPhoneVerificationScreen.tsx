@@ -6,16 +6,17 @@ const SignUpPhoneVerificationScreen = ({ navigation, route }) => {
   const {
     email,
     firstName,
+    bio,
     location,
     country,
     zipcode,
     gender,
     interests,
     password,
-    relationshipType,
-    profileImages,
-    about,
-    answers
+    relationshipTypes,
+    answers,
+    username,
+    images 
   } = route.params;
 
   const [phone, setPhone] = useState('');
@@ -57,21 +58,24 @@ const SignUpPhoneVerificationScreen = ({ navigation, route }) => {
       const response = await axios.post('http://192.168.1.248:3000/verify-code', {
         phone,
         code,
-        username: firstName,
+        firstName,
         email,
         password,
-        location: { country, zipcode },
+        location,
+        country,
+        zipcode,
         gender,
         interests,
-        relationshipType,
-        profileImages,
-        about,
-        answers
+        relationshipTypes,
+        images,
+        answers,
+        username,
+        bio
       });
       setIsLoading(false);
       if (response.data.token) {
         Alert.alert('Registration Successful');
-        navigation.navigate('Login');
+        navigation.navigate('Login', { email, message: 'Registration Successful, please log in.' });
       } else {
         Alert.alert('Invalid verification code');
       }

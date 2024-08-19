@@ -4,16 +4,23 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ChooseUsernameScreen = ({ navigation, route }) => {
-    const { email, firstName, location, country, zipcode, gender, interests, bio, images,relationshipTypes,age, password, answers} = route.params;
+  const { email, firstName, location, country, zipcode, gender, interests, bio, images, relationshipTypes, password, answers } = route.params;
   const [username, setUsername] = useState('');
-  const [isAvailable, setIsAvailable] = useState(true);
+  const [isAvailable, setIsAvailable] = useState(null); // null to indicate no check has been done yet
 
   const checkUsernameAvailability = async () => {
+    if (!username) {
+      Alert.alert('Please enter a username');
+      return;
+    }
+
     try {
       const response = await axios.post('http://192.168.1.248:3000/check-username', { username });
       setIsAvailable(response.data.isAvailable);
       if (!response.data.isAvailable) {
         Alert.alert('Username is already taken. Please choose another one.');
+      } else {
+        Alert.alert('Username is available!');
       }
     } catch (error) {
       console.error('Error checking username availability', error);
@@ -27,9 +34,16 @@ const ChooseUsernameScreen = ({ navigation, route }) => {
       return;
     }
 
+    if (isAvailable === null) {
+      Alert.alert('Please check the username availability first.');
+      return;
+    }
+
     if (isAvailable) {
       await AsyncStorage.setItem('username', username);
-      navigation.navigate('SignUpPhoneVerification', {email, firstName, location, country, zipcode, gender, interests, bio, images, password,relationshipTypes,age, answers });
+      navigation.navigate('SignUpPhoneVerification', {
+        email, firstName, location, country, zipcode, gender, interests, bio, images, password, relationshipTypes, answers, username
+      });
     } else {
       Alert.alert('Please choose a different username');
     }
@@ -42,10 +56,14 @@ const ChooseUsernameScreen = ({ navigation, route }) => {
         style={styles.input}
         placeholder="Enter your username"
         value={username}
-        onChangeText={setUsername}
+        onChangeText={(text) => {
+          setUsername(text);
+          setIsAvailable(null); // Reset availability check when the user types
+        }}
         onBlur={checkUsernameAvailability}
       />
-      <Button title="Next" onPress={handleNext} />
+      <Button title="Check Availability" onPress={checkUsernameAvailability} />
+      <Button title="Next" onPress={handleNext} disabled={isAvailable === false} />
     </View>
   );
 };

@@ -1,12 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Button, Image, StyleSheet, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as Permissions from 'expo-permissions';
 
 const SignUpPhotosScreen = ({ navigation, route }) => {
   const { email, firstName, location, country, zipcode, gender, interests, password, relationshipTypes } = route.params;
   const [images, setImages] = useState([]);
 
+  useEffect(() => {
+    const requestPermissions = async () => {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission not granted', 'Camera roll permissions are required to upload images.');
+      }
+    };
+
+    requestPermissions();
+  }, []);
+
   const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission not granted', 'Camera roll permissions are required to upload images.');
+      return;
+    }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -15,7 +33,7 @@ const SignUpPhotosScreen = ({ navigation, route }) => {
 
     if (!result.canceled && result.assets?.length > 0) {
       const selectedImageUri = result.assets[0].uri;
-      setImages([...images, selectedImageUri]); // Add the image to the array
+      setImages([...images, selectedImageUri]);
     }
   };
 
@@ -35,7 +53,7 @@ const SignUpPhotosScreen = ({ navigation, route }) => {
       interests,
       password,
       relationshipTypes,
-      images, // Pass the images array to the next screen
+      images,
     });
   };
 
