@@ -25,6 +25,7 @@
         "backgroundColor": "#ffffff"
       },
       "permissions": [
+        "INTERNET",
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
@@ -33,6 +34,15 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "firebaseApiKey": "AIzaSyBLkOQTKokgCmRV2JZ6HfDOBBjuGQKyZDk",
+      "firebaseAuthDomain": "mydatingapp-5f1c8.firebaseapp.com",
+      "firebaseProjectId": "mydatingapp-5f1c8",
+      "firebaseStorageBucket": "mydatingapp-5f1c8.appspot.com",
+      "firebaseMessagingSenderId": "121839686509",
+      "firebaseAppId": "1:121839686509:web:f7676274f1c1fd0d2f8064",
+      "firebaseMeasurementId": "G-V4FBK6V5TR"
     }
   }
 }

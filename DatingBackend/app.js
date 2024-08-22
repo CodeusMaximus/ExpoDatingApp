@@ -4,11 +4,26 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const twilio = require('twilio');
+const { initializeApp } = require('firebase/app');
+const { getStorage, ref, uploadBytes, getDownloadURL } = require('firebase/storage');
 require('dotenv').config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: process.env.FIREBASE_API_KEY,
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.FIREBASE_APP_ID,
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const storage = getStorage(firebaseApp);
 
 // Define the User Schema
 const UserSchema = new mongoose.Schema({
@@ -36,8 +51,8 @@ const UserSchema = new mongoose.Schema({
   age: { type: Number },
   interests: { type: [String] },
   bio: { type: String },
-  images: { type: [String] },
-  profilePicture: { type: String },
+  images: { type: [String] }, // Store Firebase Storage URLs
+  profilePicture: { type: String }, // Store Firebase Storage URL
   relationshipTypes: { type: [String] },
   answers: { type: [String] },
   isVerified: { type: Boolean, default: false },
@@ -114,19 +129,30 @@ app.post('/verify-code', async (req, res) => {
     if (verification_check.status === 'approved') {
       const hashedPassword = await bcrypt.hash(password, 10);
 
+      // Upload images to Firebase Storage
+      const imageUrls = [];
+      for (const image of images) {
+        const response = await fetch(image);
+        const blob = await response.blob();
+        const storageRef = ref(storage, `user_images/${Date.now()}_${username}`);
+        const snapshot = await uploadBytes(storageRef, blob);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        imageUrls.push(downloadURL);
+      }
+
       const user = new User({
         username,
         email,
         password: hashedPassword,
         phone,
-        location,  // Storing full location object
+        location,
         country,
         zipcode,
         age,
         gender,
         interests,
         bio,
-        images,
+        images: imageUrls,
         relationshipTypes,
         answers,
         isVerified: true,
@@ -246,9 +272,19 @@ app.post('/update-profile', authMiddleware, async (req, res) => {
   const { username, profilePicture } = req.body;
 
   try {
+    let profilePictureUrl = profilePicture;
+    
+    if (profilePicture) {
+      const response = await fetch(profilePicture);
+      const blob = await response.blob();
+      const storageRef = ref(storage, `profile_pictures/${Date.now()}_${username}`);
+      const snapshot = await uploadBytes(storageRef, blob);
+      profilePictureUrl = await getDownloadURL(snapshot.ref);
+    }
+
     const user = await User.findByIdAndUpdate(
       req.user.userId,
-      { username, profilePicture },
+      { username, profilePicture: profilePictureUrl },
       { new: true }
     );
 

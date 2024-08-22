@@ -1,72 +1,73 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, Button, Image, StyleSheet, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import * as Permissions from 'expo-permissions';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { storage } from '../firebaseconfig';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-const SignUpPhotosScreen = ({ navigation, route }) => {
+const SignUpPhotoScreen = ({ navigation, route }) => {
   const { email, firstName, location, country, zipcode, gender, interests, password, relationshipTypes } = route.params;
-  const [images, setImages] = useState([]);
-
-  useEffect(() => {
-    const requestPermissions = async () => {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission not granted', 'Camera roll permissions are required to upload images.');
-      }
-    };
-
-    requestPermissions();
-  }, []);
+  const [imageUri, setImageUri] = useState<string | null>(null);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission not granted', 'Camera roll permissions are required to upload images.');
+      Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to make this work!');
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
+    let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 1,
     });
 
-    if (!result.canceled && result.assets?.length > 0) {
+    if (!result.canceled && result.assets.length > 0) {
       const selectedImageUri = result.assets[0].uri;
-      setImages([...images, selectedImageUri]);
-    }
-  };
+      setImageUri(selectedImageUri);
 
-  const handleNext = () => {
-    if (images.length === 0) {
-      Alert.alert('Error', 'Please upload at least one image before proceeding.');
-      return;
-    }
+      try {
+        // Convert the image URI to a blob
+        const response = await fetch(selectedImageUri);
+        const blob = await response.blob();
 
-    navigation.navigate('SignUpBio', {
-      email,
-      firstName,
-      location,
-      country,
-      zipcode,
-      gender,
-      interests,
-      password,
-      relationshipTypes,
-      images,
-    });
+        // Create a reference to the Firebase storage location
+        const storageRef = ref(storage, `profile_pictures/${Date.now()}_profile.jpg`);
+
+        // Upload the blob to Firebase
+        const snapshot = await uploadBytes(storageRef, blob);
+
+        // Get the download URL
+        const imageUrl = await getDownloadURL(snapshot.ref);
+
+        // Save the image URL to AsyncStorage
+        await AsyncStorage.setItem('profilePictureUri', imageUrl);
+
+        // Navigate to the next screen with the image URL
+        navigation.navigate('SignUpBio', {
+          email,
+          firstName,
+          location,
+          country,
+          zipcode,
+          gender,
+          interests,
+          password,
+          relationshipTypes,
+          images: [imageUrl],
+        });
+      } catch (error) {
+        console.error('Error uploading image:', error.message);
+        Alert.alert('Upload Error', `Failed to upload image: ${error.message}`);
+      }
+    }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Upload Photos</Text>
-      <View style={styles.imageContainer}>
-        {images.length > 0 && (
-          <Image source={{ uri: images[0] }} style={styles.image} />
-        )}
-      </View>
-      <Button title="Pick Images" onPress={pickImage} />
-      <Button title="Next" onPress={handleNext} />
+      <Text style={styles.title}>Upload Photo</Text>
+      {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
+      <Button title="Pick an Image" onPress={pickImage} />
     </View>
   );
 };
@@ -83,18 +84,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
-  imageContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-    width: '100%',
-    height: 250,
-  },
   image: {
     width: 200,
     height: 200,
     borderRadius: 100,
+    marginBottom: 20,
   },
 });
 
-export default SignUpPhotosScreen;
+export default SignUpPhotoScreen;
