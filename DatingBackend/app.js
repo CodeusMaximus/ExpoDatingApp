@@ -134,11 +134,14 @@ app.post('/verify-code', async (req, res) => {
       for (const image of images) {
         const response = await fetch(image);
         const blob = await response.blob();
-        const storageRef = ref(storage, `user_images/${Date.now()}_${username}`);
+        const storageRef = ref(storage, `profile_pictures/${Date.now()}_${username}`);
         const snapshot = await uploadBytes(storageRef, blob);
         const downloadURL = await getDownloadURL(snapshot.ref);
         imageUrls.push(downloadURL);
       }
+
+      // Use the first image as the profile picture if available
+      const profilePictureUrl = imageUrls.length > 0 ? imageUrls[0] : 'profile_pictures/default-profile.png';
 
       const user = new User({
         username,
@@ -153,6 +156,7 @@ app.post('/verify-code', async (req, res) => {
         interests,
         bio,
         images: imageUrls,
+        profilePicture: profilePictureUrl, // Save the profile picture
         relationshipTypes,
         answers,
         isVerified: true,
@@ -268,20 +272,18 @@ app.post('/check-email', async (req, res) => {
 });
 
 // Update profile picture and username
-app.post('/update-profile', authMiddleware, async (req, res) => {
+app.put('/update-profile', authMiddleware, async (req, res) => {
   const { username, profilePicture } = req.body;
 
   try {
     let profilePictureUrl = profilePicture;
     
     if (profilePicture) {
-      const response = await fetch(profilePicture);
-      const blob = await response.blob();
-      const storageRef = ref(storage, `profile_pictures/${Date.now()}_${username}`);
-      const snapshot = await uploadBytes(storageRef, blob);
-      profilePictureUrl = await getDownloadURL(snapshot.ref);
+      // The profile picture URL is directly passed from the front end
+      profilePictureUrl = profilePicture; 
     }
 
+    // Update the user profile in MongoDB
     const user = await User.findByIdAndUpdate(
       req.user.userId,
       { username, profilePicture: profilePictureUrl },

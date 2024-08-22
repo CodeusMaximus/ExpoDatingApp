@@ -28,12 +28,13 @@ const SettingsScreen = () => {
                 const user = response.data;
                 setUsername(user.username || `User${Math.floor(Math.random() * 100000)}`);
 
-                // If the user has a saved profile picture, get the Firebase URL
-                if (user.profilePicture && user.profilePicture !== 'default-profile.png') {
-                    const storageRef = ref(storage, user.profilePicture); // Correct reference to image path in Firebase Storage
-                    console.log('Fetching image from Firebase Storage at path:', user.profilePicture);
+                // Check the correct folder for the profile picture
+                const profilePicPath = user.profilePicture || 'profile_pictures/default-profile.png';
 
-                    // Retrieve the download URL
+                if (profilePicPath !== 'profile_pictures/default-profile.png') {
+                    const storageRef = ref(storage, profilePicPath); 
+                    console.log('Fetching image from Firebase Storage at path:', profilePicPath);
+
                     try {
                         const imageUrl = await getDownloadURL(storageRef);
                         console.log('Retrieved image URL:', imageUrl);
@@ -80,10 +81,10 @@ const SettingsScreen = () => {
             const selectedImageUri = result.assets[0].uri;
 
             try {
-                // Upload the image to Firebase Storage
+                // Upload the image to the selected folder in Firebase Storage
                 const response = await fetch(selectedImageUri);
                 const blob = await response.blob();
-                const fileName = `profile_pictures/${Date.now()}_profile.jpg`; // You can adjust this as needed
+                const fileName = `profile_pictures/${Date.now()}_profile.jpg`; // Adjust to single folder
                 const storageRef = ref(storage, fileName);
                 await uploadBytes(storageRef, blob);
 
@@ -97,7 +98,7 @@ const SettingsScreen = () => {
                 // Update the backend with the new profile picture URL
                 const token = await AsyncStorage.getItem('userToken');
                 await axios.put(
-                    'http://192.168.1.248:3000/profile',
+                    'http://192.168.1.248:3000/update-profile',  // Make sure this endpoint matches your backend
                     { profilePicture: fileName }, // Save the file name in your backend
                     {
                         headers: {
