@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const twilio = require('twilio');
 const { initializeApp } = require('firebase/app');
-const { getStorage, ref, uploadBytes, getDownloadURL } = require('firebase/storage');
+const { getStorage, ref, getDownloadURL } = require('firebase/storage');
 require('dotenv').config();
 
 const app = express();
@@ -83,19 +83,11 @@ const client = twilio(accountSid, authToken);
 app.post('/send-code', (req, res) => {
   const { phone } = req.body;
 
-  console.log('Sending verification code to:', phone);
-
   client.verify.v2.services(serviceSid)
     .verifications
     .create({ to: phone, channel: 'sms' })
-    .then(verification => {
-      console.log('Verification sent:', verification);
-      res.json({ success: true, sid: verification.sid });
-    })
-    .catch(error => {
-      console.error('Error sending code:', error);
-      res.status(500).send('Failed to send verification code');
-    });
+    .then(verification => res.json({ success: true, sid: verification.sid }))
+    .catch(error => res.status(500).send('Failed to send verification code'));
 });
 
 // Verify code and complete registration
@@ -113,23 +105,20 @@ app.post('/verify-code', async (req, res) => {
   if (!phone) missingFields.push('phone');
 
   if (missingFields.length > 0) {
-    console.log('Missing required fields during registration:', missingFields);
     return res.status(400).send(`Missing required fields: ${missingFields.join(', ')}`);
   }
-
-  console.log('Received fields:', req.body);
 
   try {
     const verification_check = await client.verify.v2.services(serviceSid)
       .verificationChecks
       .create({ to: phone, code });
 
-    console.log('Verification check status:', verification_check.status);
+      console.log('Verification check status:', verification_check.status);
 
     if (verification_check.status === 'approved') {
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Upload images to Firebase Storage
+      // Upload images to Firebase Storage for the settings screen
       const imageUrls = [];
       for (const image of images) {
         const response = await fetch(image);
@@ -140,10 +129,10 @@ app.post('/verify-code', async (req, res) => {
         imageUrls.push(downloadURL);
       }
 
-      // Use the first image as the profile picture if available
       const profilePictureUrl = imageUrls.length > 0 ? imageUrls[0] : 'profile_pictures/default-profile.png';
 
       const user = new User({
+        firstName,
         username,
         email,
         password: hashedPassword,
@@ -164,14 +153,11 @@ app.post('/verify-code', async (req, res) => {
 
       await user.save();
       const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-      console.log('User registered and token generated:', token);
       res.json({ token });
     } else {
-      console.log('Invalid verification code');
       res.status(400).send('Invalid verification code');
     }
   } catch (error) {
-    console.error('Error during verification or registration:', error.message);
     res.status(500).send('Failed to verify code or complete registration');
   }
 });
@@ -181,32 +167,21 @@ app.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    console.log('Missing email or password during login');
     return res.status(400).send('All fields are required');
   }
 
   try {
     const user = await User.findOne({ email });
-    if (!user) {
-      console.log('Invalid credentials: user not found');
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).send('Invalid credentials');
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      console.log('Invalid credentials: password mismatch');
-      return res.status(401).send('Invalid credentials');
-    }
-
-    // Update last active time
     user.lastActive = Date.now();
     await user.save();
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    console.log('User logged in and token generated:', token);
     res.json({ token });
   } catch (error) {
-    console.error('Login error:', error.message);
     res.status(500).send('Server error during login');
   }
 });
@@ -214,19 +189,13 @@ app.post('/login', async (req, res) => {
 // Middleware to authenticate users
 const authMiddleware = (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
-  if (!token) {
-    console.log('No token provided');
-    return res.status(401).send('Access denied');
-  }
+  if (!token) return res.status(401).send('Access denied');
 
   try {
-    console.log('Received token:', token);
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
-    console.log('Token validated, user ID:', decoded.userId);
     next();
   } catch (error) {
-    console.error('Invalid token:', error.message);
     res.status(400).send('Invalid token');
   }
 };
@@ -235,18 +204,22 @@ const authMiddleware = (req, res, next) => {
 app.get('/profile', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select('-password');
-    if (!user) {
-      console.log('User not found with ID:', req.user.userId);
-      return res.status(404).send('User not found');
-    }
-    console.log('User profile fetched:', user);
-    res.json(user);
+    if (!user) return res.status(404).send('User not found');
+
+    res.json({
+      username: user.username,
+      age: user.age,
+      county: user.country,
+      gender: user.gender,
+      bio: user.bio,
+      interests: user.interests,
+      images: user.images,
+      profilePicture: user.profilePicture,
+    });
   } catch (error) {
-    console.error('Error fetching profile:', error.message);
     res.status(500).send('Server error while fetching profile');
   }
 });
-
 // Check username availability
 app.post('/check-username', async (req, res) => {
   const { username } = req.body;
@@ -298,6 +271,33 @@ app.put('/update-profile', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Error updating profile:', error);
     res.status(500).send('Server error while updating profile');
+  }
+});
+
+// Fetch users (return full path to profile pictures)
+app.get('/users', async (req, res) => {
+  try {
+    const users = await User.find({}).select('username profilePicture');
+
+    // Retrieve the full Firebase URL for each user's profile picture
+    const userData = await Promise.all(users.map(async (user) => {
+      let profilePictureUrl = user.profilePicture;
+
+      // If the profile picture is stored in Firebase, retrieve the full URL
+      if (profilePictureUrl && !profilePictureUrl.startsWith('http')) {
+        const storageRef = ref(storage, profilePictureUrl);
+        profilePictureUrl = await getDownloadURL(storageRef);
+      }
+
+      return {
+        username: user.username,
+        profilePicture: profilePictureUrl,
+      };
+    }));
+
+    res.json(userData);
+  } catch (error) {
+    res.status(500).send('Server error while fetching users');
   }
 });
 
