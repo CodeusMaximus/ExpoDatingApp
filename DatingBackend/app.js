@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const twilio = require('twilio');
 const { initializeApp } = require('firebase/app');
-const { getStorage, ref, getDownloadURL } = require('firebase/storage');
+const { getStorage, ref, getDownloadURL, uploadBytes } = require('firebase/storage');
 require('dotenv').config();
 
 const app = express();
@@ -87,7 +87,10 @@ app.post('/send-code', (req, res) => {
     .verifications
     .create({ to: phone, channel: 'sms' })
     .then(verification => res.json({ success: true, sid: verification.sid }))
-    .catch(error => res.status(500).send('Failed to send verification code'));
+    .catch(error => {
+      console.error('Failed to send verification code:', error);
+      res.status(500).send('Failed to send verification code');
+    });
 });
 
 // Verify code and complete registration
@@ -113,23 +116,28 @@ app.post('/verify-code', async (req, res) => {
       .verificationChecks
       .create({ to: phone, code });
 
-      console.log('Verification check status:', verification_check.status);
+    console.log('Verification check status:', verification_check.status);
 
     if (verification_check.status === 'approved') {
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Upload images to Firebase Storage for the settings screen
+      let profilePictureUrl = 'profile_pictures/default-profile.png';  // Default image URL
       const imageUrls = [];
-      for (const image of images) {
-        const response = await fetch(image);
-        const blob = await response.blob();
-        const storageRef = ref(storage, `profile_pictures/${Date.now()}_${username}`);
-        const snapshot = await uploadBytes(storageRef, blob);
-        const downloadURL = await getDownloadURL(snapshot.ref);
-        imageUrls.push(downloadURL);
+      if (images.length > 0) {
+        for (const image of images) {
+          try {
+            const response = await fetch(image);
+            const blob = await response.blob();
+            const storageRef = ref(storage, `profile_pictures/${Date.now()}_${username}`);
+            const snapshot = await uploadBytes(storageRef, blob);
+            const downloadURL = await getDownloadURL(snapshot.ref);
+            imageUrls.push(downloadURL);
+          } catch (imageError) {
+            console.error('Error uploading image:', imageError);
+          }
+        }
+        profilePictureUrl = imageUrls.length > 0 ? imageUrls[0] : profilePictureUrl;
       }
-
-      const profilePictureUrl = imageUrls.length > 0 ? imageUrls[0] : 'profile_pictures/default-profile.png';
 
       const user = new User({
         firstName,
@@ -158,6 +166,11 @@ app.post('/verify-code', async (req, res) => {
       res.status(400).send('Invalid verification code');
     }
   } catch (error) {
+    console.error('Failed to verify code or complete registration', {
+      message: error.message,
+      stack: error.stack,
+      error: error,
+    });
     res.status(500).send('Failed to verify code or complete registration');
   }
 });
@@ -182,6 +195,7 @@ app.post('/login', async (req, res) => {
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.json({ token });
   } catch (error) {
+    console.error('Server error during login:', error);
     res.status(500).send('Server error during login');
   }
 });
@@ -196,6 +210,7 @@ const authMiddleware = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (error) {
+    console.error('Invalid token:', error);
     res.status(400).send('Invalid token');
   }
 };
@@ -209,7 +224,7 @@ app.get('/profile', authMiddleware, async (req, res) => {
     res.json({
       username: user.username,
       age: user.age,
-      county: user.country,
+      country: user.country,
       gender: user.gender,
       bio: user.bio,
       interests: user.interests,
@@ -217,9 +232,11 @@ app.get('/profile', authMiddleware, async (req, res) => {
       profilePicture: user.profilePicture,
     });
   } catch (error) {
+    console.error('Server error while fetching profile:', error);
     res.status(500).send('Server error while fetching profile');
   }
 });
+
 // Check username availability
 app.post('/check-username', async (req, res) => {
   const { username } = req.body;
@@ -252,11 +269,9 @@ app.put('/update-profile', authMiddleware, async (req, res) => {
     let profilePictureUrl = profilePicture;
     
     if (profilePicture) {
-      // The profile picture URL is directly passed from the front end
       profilePictureUrl = profilePicture; 
     }
 
-    // Update the user profile in MongoDB
     const user = await User.findByIdAndUpdate(
       req.user.userId,
       { username, profilePicture: profilePictureUrl },
@@ -277,26 +292,19 @@ app.put('/update-profile', authMiddleware, async (req, res) => {
 // Fetch users (return full path to profile pictures)
 app.get('/users', async (req, res) => {
   try {
-    const users = await User.find({}).select('username profilePicture');
+    const users = await User.find({}).select('username profilePicture age location');
 
-    // Retrieve the full Firebase URL for each user's profile picture
-    const userData = await Promise.all(users.map(async (user) => {
-      let profilePictureUrl = user.profilePicture;
-
-      // If the profile picture is stored in Firebase, retrieve the full URL
-      if (profilePictureUrl && !profilePictureUrl.startsWith('http')) {
-        const storageRef = ref(storage, profilePictureUrl);
-        profilePictureUrl = await getDownloadURL(storageRef);
-      }
-
-      return {
-        username: user.username,
-        profilePicture: profilePictureUrl,
-      };
+    const userData = users.map((user) => ({
+      id: user._id,
+      username: user.username,
+      age: user.age,
+      location: user.location,
+      profilePicture: user.profilePicture, // Directly use the stored URL
     }));
 
     res.json(userData);
   } catch (error) {
+    console.error('Error fetching users:', error); // Log the error
     res.status(500).send('Server error while fetching users');
   }
 });

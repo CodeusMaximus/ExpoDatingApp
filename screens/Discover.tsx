@@ -1,34 +1,52 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, SafeAreaView, Animated } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, SafeAreaView, Animated, Alert } from 'react-native';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Swiper from 'react-native-deck-swiper';
 import HorizontalScrollComponent from '../components/HorizontalScroll';
-
-const generateMockUsers = (count) => {
-  const mockUsers = [];
-  for (let i = 1; i <= count; i++) {
-    mockUsers.push({
-      id: i,
-      name: `User ${i}`,
-      age: Math.floor(Math.random() * 20) + 20, // Random age between 20 and 40
-      location: `City ${i}`,
-      image: `https://via.placeholder.com/150?text=User+${i}`,
-    });
-  }
-  return mockUsers;
-};
+import { useNavigation } from '@react-navigation/native';
+import { getStorage, ref, getDownloadURL } from 'firebase/storage';
+import { storage } from '../firebaseconfig';
 
 const DiscoverScreen = () => {
   const [users, setUsers] = useState([]);
   const [likedCards, setLikedCards] = useState({});
   const heartScale = useRef(new Animated.Value(0)).current;
   const swiperRef = useRef(null);
-
   const navigation = useNavigation();
 
   useEffect(() => {
-    const generatedUsers = generateMockUsers(100);
-    setUsers(generatedUsers);
+    const fetchUsers = async () => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        const response = await axios.get('http://192.168.1.248:3000/users', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const usersWithImages = await Promise.all(
+          response.data.map(async (user) => {
+            let profilePictureUri = require('../assets/default-profile.png');
+            if (user.profilePicture) {
+              try {
+                const storageRef = ref(storage, user.profilePicture);
+                const imageUrl = await getDownloadURL(storageRef);
+                profilePictureUri = { uri: imageUrl };
+              } catch (error) {
+                console.error(`Failed to fetch profile picture for user ${user.username}:`, error.message);
+              }
+            }
+            return { ...user, profilePictureUri };
+          })
+        );
+
+        setUsers(usersWithImages);
+      } catch (error) {
+        console.error('Failed to fetch users', error);
+        Alert.alert('Failed to fetch users');
+      }
+    };
+
+    fetchUsers();
   }, []);
 
   const handleHeartClick = (userId) => {
@@ -36,7 +54,6 @@ const DiscoverScreen = () => {
       ...prev,
       [userId]: true, // Mark the card as liked
     }));
-    console.log(`Card ${userId} liked!`, { ...likedCards, [userId]: true }); // Log liked status
 
     Animated.sequence([
       Animated.timing(heartScale, {
@@ -81,15 +98,17 @@ const DiscoverScreen = () => {
             renderCard={(user) =>
               user ? (
                 <View key={user.id} style={styles.card}>
-                  <Image source={{ uri: user.image }} style={styles.cardImage} />
+                  <Image source={user.profilePictureUri} style={styles.cardImage} />
                   <View style={styles.cardContent}>
                     <View style={styles.cardHeader}>
                       <Text style={styles.cardTitle}>
-                        {user.name}, {user.age}
+                        {user.username}, {user.age}
                       </Text>
                       {likedCards[user.id] && <Text style={styles.likedText}>Liked!</Text>}
                     </View>
-                    <Text style={styles.cardLocation}>{user.location}</Text>
+                    <Text style={styles.cardLocation}>
+                      {user.location?.coords ? `Lat: ${user.location.coords.latitude}, Lon: ${user.location.coords.longitude}` : user.location}
+                    </Text>
                     <View style={styles.buttonContainer}>
                       <TouchableOpacity style={styles.redButton} onPress={handleSwipeLeft}>
                         <Text style={styles.buttonText}>←</Text>
@@ -163,7 +182,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     width: '100%',
     paddingTop: 20,
-    borderColor:'#000000',
+    borderColor: '#000000',
     position: 'relative',
   },
   cardHeader: {
