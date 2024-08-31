@@ -3,7 +3,7 @@ import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 import { ProgressBar } from 'react-native-paper';
 
 const Question4Screen = ({ navigation, route }) => {
-    const { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers } = route.params;
+    const { email, firstName, location, city, state,  age, gender, interests, bio, images, password, answers } = route.params;
     const [answer, setAnswer] = useState('');
     const [progress, setProgress] = useState(answers.length / 15);
   
@@ -12,9 +12,9 @@ const Question4Screen = ({ navigation, route }) => {
       setProgress(updatedAnswers.length / 15);
   
       if (updatedAnswers.length < 15) {
-        navigation.navigate('Question5', { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers: updatedAnswers });
+        navigation.navigate('Question5', { email, firstName, age, location, city, state,  gender, interests, bio, images, password, answers: updatedAnswers });
       } else {
-        navigation.navigate('UserName', { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers: updatedAnswers });
+        navigation.navigate('UserName', { email, firstName, age, location, city, state,  gender, interests, bio, images, password, answers: updatedAnswers });
       }
     };
   

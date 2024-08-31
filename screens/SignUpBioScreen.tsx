@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 
 const SignUpBioScreen = ({ navigation, route }) => {
-  const { email, firstName, location, country, zipcode, gender, interests, password, relationshipTypes, images } = route.params;
+  const { email, firstName, location, city, state, gender, interests, password,age, relationshipTypes, images } = route.params;
   const [bio, setBio] = useState('');
 
   const handleNext = () => {
@@ -10,14 +10,14 @@ const SignUpBioScreen = ({ navigation, route }) => {
       email, 
       firstName, 
       location, 
-      country, 
-      zipcode, 
+      city, state,  
       gender, 
       interests, 
       password, 
       relationshipTypes, 
       images, 
-      bio 
+      bio ,
+      age
     });
   };
 

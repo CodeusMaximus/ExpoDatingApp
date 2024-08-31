@@ -49,7 +49,7 @@ const HorizontalScrollComponent = () => {
         onPress={() => navigation.navigate('TodaysPicks')}
       >
         <Text style={styles.screenText}>Today's Picks</Text>
-      </TouchableOpacity>
+      </TouchableOpacity>  
     </ScrollView>
   );
 };
@@ -60,12 +60,13 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingHorizontal: 10,
     height: 100,
+    backgroundColor: '#9940b4'
   },
   circularScreen: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#b83ec3',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,

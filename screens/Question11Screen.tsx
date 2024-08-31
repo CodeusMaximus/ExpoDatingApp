@@ -4,7 +4,7 @@ import { ProgressBar } from 'react-native-paper';
 
 
 const Question11Screen = ({ navigation, route }) => {
-    const { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers } = route.params;
+    const {age,  email, firstName, location, city, state,  gender, interests, bio, images, password, answers } = route.params;
     const [answer, setAnswer] = useState('');
     const [progress, setProgress] = useState(answers.length / 15);
   
@@ -13,9 +13,9 @@ const Question11Screen = ({ navigation, route }) => {
       setProgress(updatedAnswers.length / 15);
   
       if (updatedAnswers.length < 15) {
-        navigation.navigate('Question12', { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers: updatedAnswers });
+        navigation.navigate('Question12', { age, email, firstName, location, city, state, gender, interests, bio, images, password, answers: updatedAnswers });
       } else {
-        navigation.navigate('UserName', { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers: updatedAnswers });
+        navigation.navigate('UserName', { age, email, firstName, location, city, state, gender, interests, bio, images, password, answers: updatedAnswers });
       }
     };
   

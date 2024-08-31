@@ -32,8 +32,8 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, unique: true },
   password: { type: String },
   phone: { type: String, unique: true },
-  country: { type: String },
-  zipcode: { type: String },
+  city: { type: String },
+  state: { type: String },
   location: {
     coords: {
       latitude: { type: Number },
@@ -97,7 +97,7 @@ app.post('/send-code', (req, res) => {
 app.post('/verify-code', async (req, res) => {
   const {
     phone, code, username, email, password, firstName,
-    country, location, zipcode, age, gender, interests = [],
+    city, location, state, age, gender, interests = [],
     bio = '', images = [], relationshipTypes = [], answers = []
   } = req.body;
 
@@ -146,8 +146,8 @@ app.post('/verify-code', async (req, res) => {
         password: hashedPassword,
         phone,
         location,
-        country,
-        zipcode,
+        city,
+        state,
         age,
         gender,
         interests,
@@ -224,7 +224,12 @@ app.get('/profile', authMiddleware, async (req, res) => {
     res.json({
       username: user.username,
       age: user.age,
-      country: user.country,
+      city: user.city,
+      state: user.state,
+      phone: user.phone,
+      location: user.location,
+      relationshipTypes: user.relationshipTypes,
+      answers: user.answers,
       gender: user.gender,
       bio: user.bio,
       interests: user.interests,
@@ -292,13 +297,14 @@ app.put('/update-profile', authMiddleware, async (req, res) => {
 // Fetch users (return full path to profile pictures)
 app.get('/users', async (req, res) => {
   try {
-    const users = await User.find({}).select('username profilePicture age location');
+    const users = await User.find({}).select('username profilePicture age city state firstName');
 
     const userData = users.map((user) => ({
       id: user._id,
       username: user.username,
       age: user.age,
-      location: user.location,
+      city: user.city,
+      state: user.state,
       profilePicture: user.profilePicture, // Directly use the stored URL
     }));
 

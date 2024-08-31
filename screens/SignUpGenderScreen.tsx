@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Button, StyleSheet, Alert } from 'react-native';
 
 const SignUpGenderScreen = ({ navigation, route }) => {
-  const { email, firstName, location, country, zipcode } = route.params;
+  const { email, firstName, location, city, state, age } = route.params;
   const [gender, setGender] = useState('');
   const [interests, setInterests] = useState([]);
 
@@ -12,7 +12,7 @@ const SignUpGenderScreen = ({ navigation, route }) => {
       return;
     }
 
-    navigation.navigate('SignUpPassword', { email, firstName, location, country, zipcode, gender, interests });
+    navigation.navigate('SignUpPassword', { email, firstName, location, city, state,   age,   gender, interests });
   };
 
   return (

@@ -4,16 +4,23 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Swiper from 'react-native-deck-swiper';
 import HorizontalScrollComponent from '../components/HorizontalScroll';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { getStorage, ref, getDownloadURL } from 'firebase/storage';
 import { storage } from '../firebaseconfig';
+
+type RootStackParamList = {
+  ProfileScreen: { user: any };
+  // Other screens...
+};
+
+type DiscoverScreenNavigationProp = NavigationProp<RootStackParamList, 'ProfileScreen'>;
 
 const DiscoverScreen = () => {
   const [users, setUsers] = useState([]);
   const [likedCards, setLikedCards] = useState({});
   const heartScale = useRef(new Animated.Value(0)).current;
   const swiperRef = useRef(null);
-  const navigation = useNavigation();
+  const navigation = useNavigation<DiscoverScreenNavigationProp>();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -49,7 +56,7 @@ const DiscoverScreen = () => {
     fetchUsers();
   }, []);
 
-  const handleHeartClick = (userId) => {
+  const handleHeartClick = (userId: string) => {
     setLikedCards((prev) => ({
       ...prev,
       [userId]: true, // Mark the card as liked
@@ -98,31 +105,33 @@ const DiscoverScreen = () => {
             renderCard={(user) =>
               user ? (
                 <View key={user.id} style={styles.card}>
-                  <Image source={user.profilePictureUri} style={styles.cardImage} />
-                  <View style={styles.cardContent}>
-                    <View style={styles.cardHeader}>
+                  <TouchableOpacity
+                    onPress={() => navigation.navigate('ProfileScreen', { user })}
+                  >
+                    <Image source={user.profilePictureUri} style={styles.cardImage} />
+                    <View style={styles.overlay}>
                       <Text style={styles.cardTitle}>
                         {user.username}, {user.age}
                       </Text>
+                      <Text style={styles.cardLocation}>
+                        {user.city}, {user.state}
+                      </Text>
                       {likedCards[user.id] && <Text style={styles.likedText}>Liked!</Text>}
                     </View>
-                    <Text style={styles.cardLocation}>
-                      {user.location?.coords ? `Lat: ${user.location.coords.latitude}, Lon: ${user.location.coords.longitude}` : user.location}
-                    </Text>
-                    <View style={styles.buttonContainer}>
-                      <TouchableOpacity style={styles.redButton} onPress={handleSwipeLeft}>
-                        <Text style={styles.buttonText}>←</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={styles.heartButton} onPress={() => handleHeartClick(user.id)}>
-                        <Text style={styles.heartText}>♥</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={styles.chatButton} onPress={handleChatNavigation}>
-                        <Text style={styles.buttonText}>💬</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={styles.greenButton} onPress={handleSwipeRight}>
-                        <Text style={styles.buttonText}>→</Text>
-                      </TouchableOpacity>
-                    </View>
+                  </TouchableOpacity>
+                  <View style={styles.buttonContainer}>
+                    <TouchableOpacity style={styles.redButton} onPress={handleSwipeLeft}>
+                      <Text style={styles.buttonText}>←</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.heartButton} onPress={() => handleHeartClick(user.id)}>
+                      <Text style={styles.heartText}>♥</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.chatButton} onPress={handleChatNavigation}>
+                      <Text style={styles.buttonText}>💬</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.greenButton} onPress={handleSwipeRight}>
+                      <Text style={styles.buttonText}>→</Text>
+                    </TouchableOpacity>
                   </View>
                   <Animated.View style={[styles.largeHeartContainer, { transform: [{ scale: heartScale }] }]}>
                     <Text style={styles.largeHeart}>❤️</Text>
@@ -149,13 +158,13 @@ const DiscoverScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#e06767',
+    backgroundColor: '#f5f5f5',
   },
   container: {
     flex: 1,
   },
   horizontalScrollContainer: {
-    height: 100, // Adjust the height as needed
+    height: 100,
   },
   swiperContainer: {
     flex: 1,
@@ -163,52 +172,67 @@ const styles = StyleSheet.create({
     paddingBottom: 60,
   },
   card: {
-    height: '70%',
-    width: '90%',
+    height: '75%',
+    width: '100%',
     borderRadius: 10,
     shadowRadius: 25,
     overflow: 'hidden',
     alignSelf: 'center',
     marginTop: 30,
+    backgroundColor: '#FFFFFF',
   },
   cardImage: {
     width: '100%',
-    height: '65%',
+    height: '90%', // Increased height to show more of the image
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
   },
-  cardContent: {
+  overlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)', // Increased opacity for better readability
     padding: 10,
-    backgroundColor: '#fff',
+  },
+  cardContent: {
+    padding: 0,
+    color: '#000000',
     width: '100%',
-    paddingTop: 20,
-    borderColor: '#000000',
+    paddingTop: 0,
+    paddingBottom: 30,
     position: 'relative',
   },
   cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    color: 'black',
   },
   cardTitle: {
     fontSize: 18,
-    color: '#000',
-    marginBottom: 5,
+    color: '#fff',
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  cardLocation: {
+    fontSize: 16,
+    color: '#fff',
+    marginBottom: 10,
   },
   likedText: {
     color: '#e74c3c',
     fontSize: 18,
-    marginLeft: 10,
     fontWeight: 'bold',
-  },
-  cardLocation: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 10,
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
+    position: 'absolute',
+    bottom: 10, // Positioned buttons at the bottom of the screen
+    left: 0,
+    right: 0,
+    zIndex: 10,
   },
   redButton: {
     width: 50,

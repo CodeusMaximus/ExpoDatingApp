@@ -15,7 +15,7 @@ import {
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage } from '../firebaseconfig';
 
 interface Profile {
@@ -123,16 +123,12 @@ const ProfileScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     }
   };
 
-  const handleDeletePhoto = async (imageUrl: string) => {
+  const handleDeletePhoto = async (imageUri: string) => {
     try {
-      // Extract the storage path from the image URL
-      const decodedUrl = decodeURIComponent(imageUrl);
-      const path = decodedUrl.split('/o/')[1].split('?')[0];
-
-      const imageRef = ref(storage, path);
+      const imageRef = ref(storage, imageUri);
       await deleteObject(imageRef);
 
-      const updatedPictures = profile.pictures.filter((picture) => picture !== imageUrl);
+      const updatedPictures = profile.pictures.filter((picture) => picture !== imageUri);
       setProfile({ ...profile, pictures: updatedPictures });
 
       const token = await AsyncStorage.getItem('userToken');
@@ -143,7 +139,6 @@ const ProfileScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         },
       });
 
-      Alert.alert('Image deleted successfully');
     } catch (error) {
       console.error('Failed to delete image', error);
       Alert.alert('Failed to delete image');
@@ -325,3 +320,4 @@ const styles = StyleSheet.create({
 });
 
 export default ProfileScreen;
+ 

@@ -22,7 +22,7 @@ import SignUpPhoneVerificationScreen from './screens/SignUpPhoneVerificationScre
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import DiscoverScreen from './screens/Discover';
-import MessagesScreen from './screens/Messages';
+import LikedUsersScreen from './screens/LikedUsers';
 import NearbyUsersScreen from './screens/Nearby';
 import OnlineUsersScreen from './screens/Online';
 import ChatScreen from './screens/ChatScreen';
@@ -98,8 +98,8 @@ const BottomTabsScreen = ({ userId }) => (
         let iconName;
         if (route.name === 'Discover') {
           iconName = 'search';
-        } else if (route.name === 'Messages') {
-          iconName = 'mail';
+        } else if (route.name === 'Likes') {
+          iconName = 'heart';
         } else if (route.name === 'Chat') {
           iconName = 'chatbubbles';
         } else if (route.name === 'ProfileScreen') {
@@ -115,7 +115,7 @@ const BottomTabsScreen = ({ userId }) => (
     })}
   >
     <Tab.Screen name="Discover" component={DiscoverScreen} options={defaultHeaderOptions} />
-    <Tab.Screen name="Messages" component={MessagesScreen} options={defaultHeaderOptions} />
+    <Tab.Screen name="Likes" component={LikedUsersScreen} options={defaultHeaderOptions} />
     <Tab.Screen
       name="Chat"
       component={ChatScreen}

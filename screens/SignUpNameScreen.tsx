@@ -3,6 +3,7 @@ import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 
 const SignUpNameScreen = ({ navigation, route }) => {
   const [firstName, setFirstName] = useState('');
+  const [age, setAge] = useState('');
   const { email } = route.params;
 
   return (
@@ -14,9 +15,17 @@ const SignUpNameScreen = ({ navigation, route }) => {
         value={firstName}
         onChangeText={setFirstName}
       />
+      <Text style={styles.title}>How old are you?</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Age"
+        value={age}
+        onChangeText={setAge}
+        keyboardType="numeric"
+      />
       <Button
         title="Next"
-        onPress={() => navigation.navigate('SignUpLocationServices', { email, firstName })}
+        onPress={() => navigation.navigate('SignUpLocationServices', { email, firstName, age })}
       />
     </View>
   );

@@ -3,7 +3,7 @@ import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 import { ProgressBar } from 'react-native-paper';
 
 const Question15Screen = ({ navigation, route }) => {
-    const { email, firstName, location, country, zipcode, gender, interests, bio, images, password, answers, relationshipTypes } = route.params;
+    const { age, email, firstName, location,city, state,  gender, interests, bio, images, password, answers, relationshipTypes } = route.params;
     const [answer, setAnswer] = useState('');
     const [progress, setProgress] = useState(answers.length / 15);
   
@@ -15,11 +15,11 @@ const Question15Screen = ({ navigation, route }) => {
   
       // Navigate to the next screen with all necessary parameters
       navigation.navigate('UserName', {
+        age, 
         email, 
         firstName, 
         location, 
-        country, 
-        zipcode, 
+        city, state, 
         gender, 
         relationshipTypes, 
         interests, 

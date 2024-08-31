@@ -3,7 +3,7 @@ import { View, Text, Button, StyleSheet } from 'react-native';
 import { RadioButton } from 'react-native-paper';
 
 const SignUpDesiredRelationshipTypeScreen = ({ navigation, route }) => {
-  const { email, firstName, location, country, zipcode, gender, interests, password } = route.params;
+  const { email, firstName, location, city, state,  gender, interests, password , age} = route.params;
   const [relationshipTypes, setRelationshipTypes] = useState({
     longTerm: false,
     shortTerm: false,
@@ -16,12 +16,12 @@ const SignUpDesiredRelationshipTypeScreen = ({ navigation, route }) => {
       email, 
       firstName, 
       location, 
-      country, 
-      zipcode, 
+      city, state, 
       gender, 
       interests, 
       password, 
-      relationshipTypes 
+      relationshipTypes,
+      age
     });
   };
 

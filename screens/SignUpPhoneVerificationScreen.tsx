@@ -8,15 +8,15 @@ const SignUpPhoneVerificationScreen = ({ navigation, route }) => {
     firstName,
     bio,
     location,
-    country,
-    zipcode,
+    city, state,
     gender,
     interests,
     password,
     relationshipTypes,
     answers,
     username,
-    images 
+    images ,
+    age
   } = route.params;
 
   const [phone, setPhone] = useState('');
@@ -62,15 +62,15 @@ const SignUpPhoneVerificationScreen = ({ navigation, route }) => {
         email,
         password,
         location,
-        country,
-        zipcode,
+        city, state,
         gender,
         interests,
         relationshipTypes,
         images,
         answers,
         username,
-        bio
+        bio,
+        age
       });
       setIsLoading(false);
       if (response.data.token) {

@@ -2,28 +2,28 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 
 const SignUpLocationScreen = ({ navigation, route }) => {
-  const { email, firstName, location } = route.params;
-  const [country, setCountry] = useState('');
-  const [zipcode, setZipcode] = useState('');
+  const { email, firstName, location, age } = route.params;
+  const [state, setState] = useState('');
+  const [city, setCity] = useState('');
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Where do you live?</Text>
       <TextInput
         style={styles.input}
-        placeholder="Country"
-        value={country}
-        onChangeText={setCountry}
+        placeholder="State"
+        value={state}
+        onChangeText={setState}
       />
       <TextInput
         style={styles.input}
-        placeholder="Zipcode"
-        value={zipcode}
-        onChangeText={setZipcode}
+        placeholder="City/Town"
+        value={city}
+        onChangeText={setCity}
       />
       <Button
         title="Next"
-        onPress={() => navigation.navigate('SignUpGender', { email, firstName, location, country, zipcode })}
+        onPress={() => navigation.navigate('SignUpGender', { email, firstName, location, city, state, age })}
       />
     </View>
   );

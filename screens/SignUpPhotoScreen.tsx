@@ -6,7 +6,7 @@ import { storage } from '../firebaseconfig';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const SignUpPhotoScreen = ({ navigation, route }) => {
-  const { email, firstName, location, country, zipcode, gender, interests, password, relationshipTypes } = route.params;
+  const { email, firstName, location, city, state, gender, interests, password, relationshipTypes ,age} = route.params;
   const [imageUri, setImageUri] = useState<string | null>(null);
 
   const pickImage = async () => {
@@ -48,13 +48,13 @@ const SignUpPhotoScreen = ({ navigation, route }) => {
           email,
           firstName,
           location,
-          country,
-          zipcode,
+          city, state,
           gender,
           interests,
           password,
           relationshipTypes,
           images: [imageUrl],
+          age
         });
       } catch (error) {
         console.error('Error uploading image:', error.message);

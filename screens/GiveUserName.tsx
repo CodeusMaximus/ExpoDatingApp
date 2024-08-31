@@ -4,7 +4,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ChooseUsernameScreen = ({ navigation, route }) => {
-  const { email, firstName, location, country, zipcode, gender, interests, bio, images, relationshipTypes, password, answers } = route.params;
+  const { age, email, firstName, location, city, state,  gender, interests, bio, images, relationshipTypes, password, answers } = route.params;
   const [username, setUsername] = useState('');
   const [isAvailable, setIsAvailable] = useState(null); // null to indicate no check has been done yet
 
@@ -41,8 +41,8 @@ const ChooseUsernameScreen = ({ navigation, route }) => {
 
     if (isAvailable) {
       await AsyncStorage.setItem('username', username);
-      navigation.navigate('SignUpPhoneVerification', {
-        email, firstName, location, country, zipcode, gender, interests, bio, images, password, relationshipTypes, answers, username
+      navigation.navigate('SignUpPhoneVerification', {age, 
+        email, firstName, location, city, state,  gender, interests, bio, images, password, relationshipTypes, answers, username
       });
     } else {
       Alert.alert('Please choose a different username');

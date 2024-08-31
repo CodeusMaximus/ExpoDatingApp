@@ -3,7 +3,7 @@ import { View, Text, Button, StyleSheet, Alert } from 'react-native';
 import * as Location from 'expo-location';
 
 const SignUpLocationServicesScreen = ({ navigation, route }) => {
-  const { email, firstName } = route.params;
+  const { email, firstName, age} = route.params;
 
   const handleEnableLocation = async () => {
     try {
@@ -16,7 +16,7 @@ const SignUpLocationServicesScreen = ({ navigation, route }) => {
       let location = await Location.getCurrentPositionAsync({});
       if (location) {
         console.log('Location fetched:', location); // Log location for debugging
-        navigation.navigate('SignUpLocation', { email, firstName, location });
+        navigation.navigate('SignUpLocation', { email, firstName, location,age });
       } else {
         Alert.alert('Location Error', 'Unable to retrieve location.');
       }

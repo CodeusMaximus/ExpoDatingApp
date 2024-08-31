@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 
 const SignUpPasswordScreen = ({ navigation, route }) => {
-  const { email, firstName, location, country, zipcode, gender, interests ,} = route.params;
+  const { email, firstName, location, city, state, gender, interests , age} = route.params;
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -15,11 +15,12 @@ const SignUpPasswordScreen = ({ navigation, route }) => {
       email,
       firstName,
       location,
-      country,
-      zipcode,
+      city,
+       state,
       gender,
       interests,
       password,
+      age
     });
   };
 
