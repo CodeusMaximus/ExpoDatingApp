@@ -1,4 +1,3 @@
-// src/components/CustomHeader.tsx
 import React from 'react';
 import { View, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -14,7 +13,7 @@ const CustomHeader = () => {
   return (
     <View style={styles.container}>
       <Image source={require('../assets/logo.png')} style={styles.logo} />
-      <TouchableOpacity onPress={goToSettings} style={styles.iconContainer}>
+      <TouchableOpacity onPress={goToSettings}  style={styles.cog}  >
         <Icon name="cog" size={30} color="#000" />
       </TouchableOpacity>
     </View>
@@ -23,20 +22,23 @@ const CustomHeader = () => {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    height: 80,
+     height: 80,
+     justifyContent: 'center' 
   },
   logo: {
     width: 150,
     height: 150,
     resizeMode: 'contain',
   },
-  iconContainer: {
-    padding: 10,
-  },
+  cog: {  
+    
+
+
+  }
+  
 });
 
 export default CustomHeader;

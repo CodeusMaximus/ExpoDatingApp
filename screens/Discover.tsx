@@ -5,15 +5,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Swiper from 'react-native-deck-swiper';
 import HorizontalScrollComponent from '../components/HorizontalScroll';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
-import { getStorage, ref, getDownloadURL } from 'firebase/storage';
-import { storage } from '../firebaseconfig';
+import { getStorage, ref, getDownloadURL } from 'firebase/storage'; // Import only necessary Firebase functions
+import { RootStackParamList } from '../types/types';
 
-type RootStackParamList = {
-  ProfileScreen: { user: any };
-  // Other screens...
-};
-
-type DiscoverScreenNavigationProp = NavigationProp<RootStackParamList, 'ProfileScreen'>;
+type DiscoverScreenNavigationProp = NavigationProp<RootStackParamList, 'Chat'>;
 
 const DiscoverScreen = () => {
   const [users, setUsers] = useState([]);
@@ -26,15 +21,25 @@ const DiscoverScreen = () => {
     const fetchUsers = async () => {
       try {
         const token = await AsyncStorage.getItem('userToken');
+        if (!token) {
+          Alert.alert('Error', 'Missing authentication token');
+          return;
+        }
+
         const response = await axios.get('http://192.168.1.248:3000/users', {
           headers: { Authorization: `Bearer ${token}` },
         });
 
+        console.log('Fetched users:', response.data); // Log the full response to verify structure
+
+        // Retrieve user images from Firebase
         const usersWithImages = await Promise.all(
           response.data.map(async (user) => {
-            let profilePictureUri = require('../assets/default-profile.png');
+            let profilePictureUri = require('../assets/default-profile.png'); // Default image
+            
             if (user.profilePicture) {
               try {
+                const storage = getStorage(); // Direct usage of Firebase storage
                 const storageRef = ref(storage, user.profilePicture);
                 const imageUrl = await getDownloadURL(storageRef);
                 profilePictureUri = { uri: imageUrl };
@@ -46,17 +51,17 @@ const DiscoverScreen = () => {
           })
         );
 
-        setUsers(usersWithImages);
+        setUsers(usersWithImages.filter(user => user !== null)); // Remove any invalid users
       } catch (error) {
-        console.error('Failed to fetch users', error);
-        Alert.alert('Failed to fetch users');
+        console.error('Failed to fetch users:', error);
+        Alert.alert('Failed to fetch users', error.message || 'An error occurred while fetching users.');
       }
     };
 
     fetchUsers();
   }, []);
 
-  const handleHeartClick = (userId: string) => {
+  const handleHeartClick = (userId) => {
     setLikedCards((prev) => ({
       ...prev,
       [userId]: true, // Mark the card as liked
@@ -87,9 +92,13 @@ const DiscoverScreen = () => {
       swiperRef.current.swipeLeft();
     }
   };
-
-  const handleChatNavigation = () => {
-    navigation.navigate('Chat');
+  const handleChatNavigation = (userId) => {
+    if (userId) {
+      console.log('Navigating to Chat with user ID:', userId); // Debug log
+      navigation.navigate('Chat', { userId }); // Pass userId directly
+    } else {
+      console.error('Invalid user ID for Chat navigation:', userId);
+    }
   };
 
   return (
@@ -106,7 +115,10 @@ const DiscoverScreen = () => {
               user ? (
                 <View key={user.id} style={styles.card}>
                   <TouchableOpacity
-                    onPress={() => navigation.navigate('ProfileScreen', { user })}
+                    onPress={() => {
+                      console.log('Navigating to UserProfile with userId:', user.id); // Debug log
+                      navigation.navigate('UserProfile', { userId: user.id });
+                    }}
                   >
                     <Image source={user.profilePictureUri} style={styles.cardImage} />
                     <View style={styles.overlay}>
@@ -126,7 +138,7 @@ const DiscoverScreen = () => {
                     <TouchableOpacity style={styles.heartButton} onPress={() => handleHeartClick(user.id)}>
                       <Text style={styles.heartText}>♥</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.chatButton} onPress={handleChatNavigation}>
+                    <TouchableOpacity style={styles.chatButton}  onPress={() => handleChatNavigation(user.id)}>
                       <Text style={styles.buttonText}>💬</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.greenButton} onPress={handleSwipeRight}>
@@ -183,7 +195,7 @@ const styles = StyleSheet.create({
   },
   cardImage: {
     width: '100%',
-    height: '90%', // Increased height to show more of the image
+    height: '90%',
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
   },
@@ -192,21 +204,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)', // Increased opacity for better readability
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     padding: 10,
-  },
-  cardContent: {
-    padding: 0,
-    color: '#000000',
-    width: '100%',
-    paddingTop: 0,
-    paddingBottom: 30,
-    position: 'relative',
-  },
-  cardHeader: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    color: 'black',
   },
   cardTitle: {
     fontSize: 18,
@@ -229,7 +228,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     position: 'absolute',
-    bottom: 10, // Positioned buttons at the bottom of the screen
+    bottom: 10,
     left: 0,
     right: 0,
     zIndex: 10,
@@ -289,7 +288,6 @@ const styles = StyleSheet.create({
   largeHeart: {
     fontSize: 100,
     color: '#e74c3c',
-    opacity: 0.8,
   },
 });
 

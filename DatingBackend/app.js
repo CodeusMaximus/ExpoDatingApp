@@ -61,6 +61,16 @@ const UserSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', UserSchema);
 
+// Define the Message Schema
+const MessageSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  content: { type: String, required: true },
+  type: { type: String, enum: ['text', 'image', 'audio', 'document'], required: true },
+  timestamp: { type: Date, default: Date.now },
+});
+
+const Message = mongoose.model('Message', MessageSchema);
+
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
@@ -266,31 +276,35 @@ app.post('/check-email', async (req, res) => {
   }
 });
 
-// Update profile picture and username
-app.put('/update-profile', authMiddleware, async (req, res) => {
-  const { username, profilePicture } = req.body;
-
+// Update Profile Route
+app.put('/update-profile', async (req, res) => {
+  const { images, bio, interests, age, username } = req.body;
+  const token = req.headers.authorization.split(' ')[1];
+  
   try {
-    let profilePictureUrl = profilePicture;
-    
-    if (profilePicture) {
-      profilePictureUrl = profilePicture; 
-    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.userId;
 
-    const user = await User.findByIdAndUpdate(
-      req.user.userId,
-      { username, profilePicture: profilePictureUrl },
-      { new: true }
-    );
-
+    // Find the user and update profile details
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).send('User not found');
     }
 
-    res.json(user);
+    // Update fields accordingly
+    if (images) user.images = images;
+    if (bio) user.bio = bio;
+    if (interests) user.interests = interests.split(',').map((i) => i.trim());
+    if (age) user.age = age;
+    if (username) user.username = username;
+
+    // Save the user document
+    await user.save();
+
+    res.json({ message: 'Profile updated successfully' });
   } catch (error) {
-    console.error('Error updating profile:', error);
-    res.status(500).send('Server error while updating profile');
+    console.error('Failed to update profile', error);
+    res.status(500).send('Failed to update profile');
   }
 });
 
@@ -315,7 +329,82 @@ app.get('/users', async (req, res) => {
   }
 });
 
-// Start the server
+app.get('/user/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params; // Get the user ID from the request parameters
+    console.log('Received request for user with ID:', userId); // Debug log
+
+    // Check if the ID is valid
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      console.error('Invalid user ID:', userId); // Log invalid ID
+      return res.status(400).send('Invalid user ID');
+    }
+
+    // Find the user by ID and exclude the password field
+    const user = await User.findById(userId).select('-password');
+    if (!user) {
+      console.error('User not found with ID:', userId); // Log not found
+      return res.status(404).send('User not found');
+    }
+
+    // Send the user data as a JSON response
+    res.json(user);
+  } catch (error) {
+    console.error('Server error while fetching user profile:', error); // Log server error
+    res.status(500).send('Server error while fetching user profile');
+  }
+});
+ 
+// Fetch user by ID for chat and retrieve profile pictures from Firebase
+app.get('/api/chats/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log('Fetching user data for ID:', userId);
+
+    // Validate user ID format
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      console.error('Invalid user ID format:', userId);
+      return res.status(400).send('Invalid user ID');
+    }
+
+    // Find user by ID and exclude the password field
+    const user = await User.findById(userId).select('username profilePicture');
+    if (!user) {
+      console.error('User not found with ID:', userId);
+      return res.status(404).send('User not found');
+    }
+
+    // Retrieve the profile picture URL from Firebase
+    let profilePictureUrl = user.profilePicture;
+    if (profilePictureUrl && !profilePictureUrl.startsWith('http')) {
+      try {
+        const storageRef = ref(storage, `profile_pictures/${profilePictureUrl}`);
+        profilePictureUrl = await getDownloadURL(storageRef);
+        console.log(`Fetched Firebase URL for user ${user.username}: ${profilePictureUrl}`);
+      } catch (error) {
+        console.error(`Failed to fetch Firebase URL for user ${user.username}:`, error.message);
+        profilePictureUrl = require('../assets/default-profile.png'); // Use local default if Firebase fails
+      }
+    } else if (!profilePictureUrl) {
+      profilePictureUrl = require('../assets/default-profile.png'); // Use local default
+    }
+
+    // Example of fetching related messages (adjust according to your schema)
+    const messages = await Message.find({ userId }).select('content type'); // Ensure this matches your database schema
+
+    // Respond with user data and messages
+    res.json({
+      user: {
+        username: user.username,
+        profilePicture: profilePictureUrl,
+      },
+      messages,
+    });
+  } catch (error) {
+    console.error('Error fetching user data:', error.message);
+    res.status(500).send('Server error while fetching user data');
+  }
+});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

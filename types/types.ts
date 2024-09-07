@@ -10,8 +10,12 @@ export interface UserProfile {
     username: string;
     email: string;
     profile: UserProfile;
+    profilePicture: string;
+    profilePictureUri: { uri: string };
   }
-  // src/types.ts
+ // src/types.ts
+
+// Define the RootStackParamList with all necessary screen parameters
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
@@ -42,20 +46,22 @@ export type RootStackParamList = {
   Question15: undefined;
   SignUpPhoneVerification: undefined;
   Discover: undefined;
-  Messages: undefined;
-  Chat: undefined;
+  Chat: { userId: string };
   Profile: undefined;
   NearbyUsers: undefined;
   OnlineUsers: undefined;
   Matches: undefined;
   TodaysPicks: undefined;
+  UserProfile: { userId: string }; // Ensure userId is correctly typed here
+  Messages: undefined; // Add other screens as needed
 };
 
-// Make this type globally available
+// Make the type globally available for React Navigation
 declare global {
   namespace ReactNavigation {
     interface RootParamList extends RootStackParamList {}
   }
 }
+
 
   

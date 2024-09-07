@@ -40,7 +40,7 @@ import Question4Screen from './screens/Question4Screen';
 import Question5Screen from './screens/Question5Screen';
 import Question6Screen from './screens/Question6Screen';
 import Question7Screen from './screens/Question7Screen';
-import Question8Screen from './screens/Question7Screen';
+import Question8Screen from './screens/Question8Screen';
 import Question9Screen from './screens/Question9Screen';
 import Question10Screen from './screens/Question10Screen';
 import Question11Screen from './screens/Question11Screen';
@@ -48,6 +48,12 @@ import Question12Screen from './screens/Question12Screen';
 import Question13Screen from './screens/Question13Screen';
 import Question14Screen from './screens/Question14Screen';
 import Question15Screen from './screens/Question15Screen';
+import MatchesScreen from './screens/MyMatches';
+import UserProfileScreen from './screens/UserProfileScreen';
+import MessagesScreen from './screens/MessageScreen';
+
+
+
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -79,7 +85,8 @@ const AuthStack = () => (
     <Stack.Screen name="Question5" component={Question5Screen} options={defaultHeaderOptions} />
     <Stack.Screen name="Question6" component={Question6Screen} options={defaultHeaderOptions} />
     <Stack.Screen name="Question7" component={Question7Screen} options={defaultHeaderOptions} />
-    <Stack.Screen name="Question8" component={Question9Screen} options={defaultHeaderOptions} />
+    <Stack.Screen name="Question8" component={Question8Screen} options={defaultHeaderOptions} />
+    <Stack.Screen name="Question9" component={Question9Screen} options={defaultHeaderOptions} />
     <Stack.Screen name="Question10" component={Question10Screen} options={defaultHeaderOptions} />
     <Stack.Screen name="Question11" component={Question11Screen} options={defaultHeaderOptions} />
     <Stack.Screen name="Question12" component={Question12Screen} options={defaultHeaderOptions} />
@@ -88,6 +95,9 @@ const AuthStack = () => (
     <Stack.Screen name="Question15" component={Question15Screen} options={defaultHeaderOptions} />
     <Stack.Screen name="UserName" component={ChooseUsernameScreen} options={defaultHeaderOptions} />
     <Stack.Screen name="SignUpPhoneVerification" component={SignUpPhoneVerificationScreen} options={defaultHeaderOptions} />
+    <Stack.Screen name="Settings" component={SettingsScreen} options={defaultHeaderOptions} />
+    <Stack.Screen name="UserProfile" component={UserProfileScreen} options={defaultHeaderOptions} />
+    <Stack.Screen name="Chat" component={ChatScreen}   options={defaultHeaderOptions}/>
   </Stack.Navigator>
 );
 
@@ -100,12 +110,14 @@ const BottomTabsScreen = ({ userId }) => (
           iconName = 'search';
         } else if (route.name === 'Likes') {
           iconName = 'heart';
-        } else if (route.name === 'Chat') {
-          iconName = 'chatbubbles';
+        } else if (route.name === 'Messages') {
+          iconName = 'mail';
         } else if (route.name === 'ProfileScreen') {
           iconName = 'person';
-        } else if (route.name === 'Settings') {
-          iconName = 'settings';
+        } else if (route.name === 'Matches') {
+          iconName = 'flame';
+        } else if (route.name === 'Chat') {
+          iconName = 'chatbubbles';
         }
         return <Ionicons name={iconName} size={size} color={color} />;
       },
@@ -117,13 +129,14 @@ const BottomTabsScreen = ({ userId }) => (
     <Tab.Screen name="Discover" component={DiscoverScreen} options={defaultHeaderOptions} />
     <Tab.Screen name="Likes" component={LikedUsersScreen} options={defaultHeaderOptions} />
     <Tab.Screen
-      name="Chat"
-      component={ChatScreen}
+      name="Messages"
+      component={MessagesScreen} 
       options={defaultHeaderOptions}
       initialParams={{ userId }} // Pass the userId as an initial parameter
     />
     <Tab.Screen name="ProfileScreen" component={ProfileScreen} options={defaultHeaderOptions} />
-    <Tab.Screen name="Settings" component={SettingsScreen} options={defaultHeaderOptions} />
+    <Tab.Screen name="Matches" component={MatchesScreen} options={defaultHeaderOptions} />
+    <Tab.Screen name="Chat" component={ChatScreen}   options={defaultHeaderOptions} initialParams={{ userId }} />
   </Tab.Navigator>
 );
 

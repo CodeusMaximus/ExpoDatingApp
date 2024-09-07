@@ -38,29 +38,30 @@ const ProfileScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const { width } = Dimensions.get('window');
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = await AsyncStorage.getItem('userToken');
-        if (token) {
-          const response = await axios.get('http://192.168.1.248:3000/profile', {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const { username, age, bio, interests, images } = response.data;
-          setProfile({
-            username: username || '',
-            age: age?.toString() || '',
-            bio: bio || '',
-            interests: interests?.join(', ') || '',
-            pictures: images || [],
-          });
-        }
-      } catch (error) {
-        console.error('Failed to fetch profile', error);
-        Alert.alert('Failed to fetch profile');
+  // Move fetchProfile function outside useEffect
+  const fetchProfile = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (token) {
+        const response = await axios.get('http://192.168.1.248:3000/profile', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const { username, age, bio, interests, images } = response.data;
+        setProfile({
+          username: username || '',
+          age: age?.toString() || '',
+          bio: bio || '',
+          interests: interests?.join(', ') || '',
+          pictures: images || [],
+        });
       }
-    };
+    } catch (error) {
+      console.error('Failed to fetch profile', error);
+      Alert.alert('Failed to fetch profile');
+    }
+  };
 
+  useEffect(() => {
     fetchProfile();
   }, []);
 
@@ -116,6 +117,10 @@ const ProfileScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
             'Content-Type': 'application/json',
           },
         });
+
+        // Call fetchProfile to refresh the data
+        fetchProfile();
+
       } catch (error) {
         console.error('Failed to upload image to Firebase', error);
         Alert.alert('Failed to upload image');
@@ -275,35 +280,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   profilePic: {
+    width: '100%',
+    height: 250,
     resizeMode: 'cover',
-    marginBottom: 10,
-  },
-  infoContainer: {
-    paddingHorizontal: 20,
-    width: '100%',
-  },
-  editableField: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    width: '100%',
-  },
-  infoText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    flex: 1,
-    marginLeft: 10,
-    padding: 10,
+    marginVertical: 10,
   },
   dotsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginVertical: 10,
+    marginTop: 10,
+    paddingTop: 0,
   },
   dot: {
     width: 8,
@@ -317,7 +303,27 @@ const styles = StyleSheet.create({
   inactiveDot: {
     backgroundColor: '#ccc',
   },
+  infoContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    width: '100%',
+  },
+  editableField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  infoText: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  input: {
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+    paddingVertical: 5,
+    fontSize: 16,
+    flex: 1,
+  },
 });
 
 export default ProfileScreen;
- 
