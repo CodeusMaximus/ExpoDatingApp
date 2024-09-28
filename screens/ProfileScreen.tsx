@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TextInput,
-  Button,
   ScrollView,
   Image,
   TouchableOpacity,
@@ -17,12 +16,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage } from '../firebaseconfig';
+import { MaterialIcons } from '@expo/vector-icons'; // Importing Expo icons
 
 interface Profile {
   username: string;
   age: string;
   bio: string;
   interests: string;
+  aboutMe?: string;
+  whatMatters?: string;
+  hobbiesTalents?: string;
+  favoriteMoviesMusicFood?: string;
+  sevenThings?: string;
+  whatLookingFor?: string;
   pictures: string[];
 }
 
@@ -32,13 +38,19 @@ const ProfileScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     age: '',
     bio: '',
     interests: '',
+    aboutMe: '',
+    whatMatters: '',
+    hobbiesTalents: '',
+    favoriteMoviesMusicFood: '',
+    sevenThings: '',
+    whatLookingFor: '',
     pictures: [],
   });
-  const [isEditing, setIsEditing] = useState(false);
+
   const { width } = Dimensions.get('window');
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [editingSection, setEditingSection] = useState<string | null>(null); // Track which section is being edited
 
-  // Move fetchProfile function outside useEffect
   const fetchProfile = async () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
@@ -48,6 +60,7 @@ const ProfileScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         });
         const { username, age, bio, interests, images } = response.data;
         setProfile({
+          ...profile,
           username: username || '',
           age: age?.toString() || '',
           bio: bio || '',
@@ -64,25 +77,6 @@ const ProfileScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   useEffect(() => {
     fetchProfile();
   }, []);
-
-  const handleSave = async () => {
-    try {
-      const updatedProfile = { ...profile };
-
-      const token = await AsyncStorage.getItem('userToken');
-      await axios.put('http://192.168.1.248:3000/update-profile', updatedProfile, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      Alert.alert('Profile updated successfully');
-      setIsEditing(false);
-    } catch (error) {
-      console.error('Failed to update profile', error);
-      Alert.alert('Failed to update profile');
-    }
-  };
 
   const handleAddPhoto = async () => {
     if (profile.pictures.length >= 8) {
@@ -118,9 +112,7 @@ const ProfileScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           },
         });
 
-        // Call fetchProfile to refresh the data
         fetchProfile();
-
       } catch (error) {
         console.error('Failed to upload image to Firebase', error);
         Alert.alert('Failed to upload image');
@@ -128,152 +120,156 @@ const ProfileScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     }
   };
 
-  const handleDeletePhoto = async (imageUri: string) => {
-    try {
-      const imageRef = ref(storage, imageUri);
-      await deleteObject(imageRef);
-
-      const updatedPictures = profile.pictures.filter((picture) => picture !== imageUri);
-      setProfile({ ...profile, pictures: updatedPictures });
-
-      const token = await AsyncStorage.getItem('userToken');
-      await axios.put('http://192.168.1.248:3000/update-profile', { images: updatedPictures }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-    } catch (error) {
-      console.error('Failed to delete image', error);
-      Alert.alert('Failed to delete image');
-    }
-  };
-
   const renderDots = () => {
     return profile.pictures.map((_, index) => (
       <View
         key={index}
-        style={[
-          styles.dot,
-          currentIndex === index ? styles.activeDot : styles.inactiveDot,
-        ]}
+        style={[styles.dot, currentIndex === index ? styles.activeDot : styles.inactiveDot]}
       />
     ));
   };
 
+  const handleTextChange = (label: string, text: string) => {
+    setProfile({ ...profile, [label]: text });
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {profile.pictures.length > 0 ? (
-        <>
-          <FlatList
-            data={profile.pictures}
-            renderItem={({ item }) => (
-              <TouchableOpacity onLongPress={() => handleDeletePhoto(item)}>
-                <Image
-                  source={{ uri: item }}
-                  style={[styles.profilePic, { width, height: width }]}
-                />
-              </TouchableOpacity>
-            )}
-            horizontal
-            pagingEnabled
-            onScroll={(event) => {
-              const scrollPosition = event.nativeEvent.contentOffset.x;
-              const currentIndex = Math.floor(scrollPosition / width);
-              setCurrentIndex(currentIndex);
-            }}
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(item, index) => `image-${index}`}
-            contentContainerStyle={styles.flatListContainer}
+      {/* Image Section */}
+      <View style={styles.imageWrapper}>
+        {profile.pictures.length > 0 ? (
+          <>
+            <FlatList
+              data={profile.pictures}
+              renderItem={({ item }) => (
+                <Image source={{ uri: item }} style={[styles.profilePic, { width, height: width }]} />
+              )}
+              horizontal
+              pagingEnabled
+              onScroll={(event) => {
+                const scrollPosition = event.nativeEvent.contentOffset.x;
+                const currentIndex = Math.floor(scrollPosition / width);
+                setCurrentIndex(currentIndex);
+              }}
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item, index) => `image-${index}`}
+              contentContainerStyle={styles.flatListContainer}
+            />
+            <View style={styles.dotsContainer}>{renderDots()}</View>
+          </>
+        ) : (
+          <Image
+            source={require('../assets/default-profile.png')}
+            style={[styles.profilePic, { width, height: width }]}
           />
-          <View style={styles.dotsContainer}>{renderDots()}</View>
-        </>
-      ) : (
-        <Image
-          source={require('../assets/default-profile.png')}
-          style={[styles.profilePic, { width, height: width }]}
-        />
-      )}
+        )}
 
-      <Button title="Add Photo" onPress={handleAddPhoto} />
+        {/* Add Photo Button Overlay */}
+        <TouchableOpacity style={styles.addPhotoButton} onPress={handleAddPhoto}>
+          <MaterialIcons name="add-a-photo" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
 
+      {/* Info Section */}
       <View style={styles.infoContainer}>
-        <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={styles.editableField}>
-          <Text style={styles.infoText}>
-            Username: {isEditing ? (
-              <TextInput
-                value={profile.username}
-                onChangeText={(value) => setProfile({ ...profile, username: value })}
-                style={styles.input}
-              />
-            ) : (
-              profile.username
-            )}
-          </Text>
-        </TouchableOpacity>
+        <Text style={styles.infoText}>Username: {profile.username}</Text>
+        <Text style={styles.infoText}>Age: {profile.age}</Text>
+        <Text style={styles.infoText}>Bio: {profile.bio}</Text>
+        <Text style={styles.infoText}>Interests: {profile.interests}</Text>
 
-        <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={styles.editableField}>
-          <Text style={styles.infoText}>
-            Age: {isEditing ? (
-              <TextInput
-                value={profile.age}
-                onChangeText={(value) => setProfile({ ...profile, age: value })}
-                style={styles.input}
-                keyboardType="numeric"
-              />
-            ) : (
-              profile.age
-            )}
-          </Text>
-        </TouchableOpacity>
+        {/* Editable Sections with Pencil Icon */}
+        <TextInputSection
+          label="aboutMe"
+          value={profile.aboutMe}
+          isEditing={editingSection === 'aboutMe'}
+          setProfile={handleTextChange}
+          onEdit={() => setEditingSection('aboutMe')}
+        />
+        <TextInputSection
+          label="whatMatters"
+          value={profile.whatMatters}
+          isEditing={editingSection === 'whatMatters'}
+          setProfile={handleTextChange}
+          onEdit={() => setEditingSection('whatMatters')}
+        />
+        <TextInputSection
+          label="hobbiesTalents"
+          value={profile.hobbiesTalents}
+          isEditing={editingSection === 'hobbiesTalents'}
+          setProfile={handleTextChange}
+          onEdit={() => setEditingSection('hobbiesTalents')}
+        />
+        <TextInputSection
+          label="favoriteMoviesMusicFood"
+          value={profile.favoriteMoviesMusicFood}
+          isEditing={editingSection === 'favoriteMoviesMusicFood'}
+          setProfile={handleTextChange}
+          onEdit={() => setEditingSection('favoriteMoviesMusicFood')}
+        />
+        <TextInputSection
+          label="sevenThings"
+          value={profile.sevenThings}
+          isEditing={editingSection === 'sevenThings'}
+          setProfile={handleTextChange}
+          onEdit={() => setEditingSection('sevenThings')}
+        />
+        <TextInputSection
+          label="whatLookingFor"
+          value={profile.whatLookingFor}
+          isEditing={editingSection === 'whatLookingFor'}
+          setProfile={handleTextChange}
+          onEdit={() => setEditingSection('whatLookingFor')}
+        />
 
-        <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={styles.editableField}>
-          <Text style={styles.infoText}>
-            Bio: {isEditing ? (
-              <TextInput
-                value={profile.bio}
-                onChangeText={(value) => setProfile({ ...profile, bio: value })}
-                style={styles.input}
-              />
-            ) : (
-              profile.bio
-            )}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={styles.editableField}>
-          <Text style={styles.infoText}>
-            Interests: {isEditing ? (
-              <TextInput
-                value={profile.interests}
-                onChangeText={(value) => setProfile({ ...profile, interests: value })}
-                style={styles.input}
-              />
-            ) : (
-              profile.interests
-            )}
-          </Text>
-        </TouchableOpacity>
-
-        {isEditing && <Button title="Save" onPress={handleSave} />}
+        {editingSection && (
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={() => setEditingSection(null)}
+          >
+            <Text style={styles.saveButtonText}>Save</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </ScrollView>
   );
 };
 
+// TextInputSection Component with Pencil Icon
+const TextInputSection = ({ label, value, isEditing, setProfile, onEdit }) => (
+  <View style={styles.editableSection}>
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionLabel}>{label}</Text>
+      <TouchableOpacity onPress={onEdit}>
+        <MaterialIcons name="edit" size={24} color="white" />
+      </TouchableOpacity>
+    </View>
+    {isEditing ? (
+      <TextInput
+        value={value}
+        onChangeText={(text) => setProfile(label, text)}
+        style={styles.sectionInput}
+        multiline={true}
+        numberOfLines={4}
+        textAlignVertical="top" // Ensures text stays at the top
+      />
+    ) : (
+      <Text style={styles.sectionText}>{value}</Text>
+    )}
+  </View>
+);
+
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    alignItems: 'center',
-    paddingVertical: 0,
     backgroundColor: '#f5f5f5',
+    paddingBottom: 20,
   },
-  imageContainer: {
+  imageWrapper: {
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 0,
-    paddingTop: 0,
+    position: 'relative',
+    marginBottom: 10,
   },
   flatListContainer: {
     alignItems: 'center',
@@ -283,13 +279,11 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 250,
     resizeMode: 'cover',
-    marginVertical: 10,
   },
   dotsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 10,
-    paddingTop: 0,
+    marginTop: 5,
   },
   dot: {
     width: 8,
@@ -303,26 +297,66 @@ const styles = StyleSheet.create({
   inactiveDot: {
     backgroundColor: '#ccc',
   },
+  addPhotoButton: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderRadius: 25,
+    padding: 10,
+    zIndex: 10,
+  },
   infoContainer: {
     paddingHorizontal: 20,
     paddingVertical: 10,
     width: '100%',
   },
-  editableField: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
   infoText: {
     fontSize: 16,
     marginBottom: 5,
   },
-  input: {
-    borderBottomWidth: 1,
+  editableSection: {
+    width: '100%',
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    backgroundColor: '#000',
+    padding: 10,
+  },
+  sectionLabel: {
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  sectionInput: {
+    borderWidth: 1,
     borderColor: '#ccc',
-    paddingVertical: 5,
+    padding: 10,
     fontSize: 16,
-    flex: 1,
+    width: '100%',
+    height: 120,
+  },
+  sectionText: {
+    fontSize: 16,
+    textAlign: 'center',
+    width: '100%',
+    color: '#000',
+  },
+  saveButton: {
+    backgroundColor: '#000',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
   },
 });
 

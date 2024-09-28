@@ -10,7 +10,7 @@ import { storage } from '../firebaseconfig'; // Ensure this path is correct
 
 const SettingsScreen = () => {
     const [username, setUsername] = useState('');
-    const [profilePicture, setProfilePicture] = useState(require('../assets/default-profile.png')); // Default image
+    const [profilePicture, setProfilePicture] = useState(require('../assets/default-profile.png')); // Default local image
     const navigation = useNavigation();
 
     useEffect(() => {
@@ -28,7 +28,7 @@ const SettingsScreen = () => {
                 const user = response.data;
                 setUsername(user.username || `User${Math.floor(Math.random() * 100000)}`);
 
-                // Check the correct folder for the profile picture
+                // Check for the correct profile picture path in profile_pictures folder
                 const profilePicPath = user.profilePicture || 'profile_pictures/default-profile.png';
 
                 if (profilePicPath !== 'profile_pictures/default-profile.png') {
@@ -81,10 +81,10 @@ const SettingsScreen = () => {
             const selectedImageUri = result.assets[0].uri;
 
             try {
-                // Upload the image to the selected folder in Firebase Storage
+                // Upload the image to the profile_pictures folder in Firebase Storage
                 const response = await fetch(selectedImageUri);
                 const blob = await response.blob();
-                const fileName = `profile_pictures/${Date.now()}_profile.jpg`; // Adjust to single folder
+                const fileName = `profile_pictures/${Date.now()}_profile.jpg`; // Correct folder for profile pictures
                 const storageRef = ref(storage, fileName);
                 await uploadBytes(storageRef, blob);
 
